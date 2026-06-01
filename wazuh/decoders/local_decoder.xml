@@ -1,0 +1,7 @@
+<!-- Single decoder untuk UFW BLOCK dan UFW AUDIT -->
+<decoder name="ufw-ddos">
+  <parent>kernel</parent>
+  <prematch>UFW BLOCK|UFW AUDIT</prematch>
+  <regex>SRC=(\S+) DST=(\S+)</regex>
+  <order>srcip, dstip</order>
+</decoder>

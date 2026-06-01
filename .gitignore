@@ -1,0 +1,7 @@
+# Private keys and SSH files
+Private Key and Create Resource/
+*.pem
+
+# OS/System files
+.DS_Store
+Thumbs.db

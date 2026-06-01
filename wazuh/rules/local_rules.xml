@@ -1,0 +1,13 @@
+<group name="ddos,attack,">
+  <rule id="100200" level="12">
+    <decoded_as>kernel</decoded_as>
+    <match>[UFW BLOCK]</match>
+    <description>Possible DDoS: Inbound traffic blocked</description>
+  </rule>
+
+  <rule id="100201" level="14" frequency="3" timeframe="60">
+    <if_matched_sid>100200</if_matched_sid>
+    <same_source_ip />
+    <description>DDoS Attack: High frequency - SOAR Triggered</description>       
+  </rule>
+</group>
