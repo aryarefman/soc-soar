@@ -41,13 +41,16 @@ if [ "$ACTION" = "add" ]; then
     logger -t "SOAR-DDoS" "AUTO-BLOCKED IP $IP"
 
     # Trigger SOAR Integrations (Shuffle, TheHive, MISP) in background
-    sudo /var/ossec/active-response/bin/soar_integrate.py "$IP" "$ALERT_ID" "$RULE_ID" "$DESCRIPTION" >> "$LOG_FILE" 2>&1 &
+    sudo /var/ossec/active-response/bin/soar_integrate.py "$ACTION" "$INPUT" >> "$LOG_FILE" 2>&1 &
 
 elif [ "$ACTION" = "delete" ]; then
     # Remove iptables block rule
     sudo /sbin/iptables -D INPUT -s "$IP" -j DROP
     echo "[$TIMESTAMP] UNBLOCKED | IP: $IP" >> "$LOG_FILE"
     logger -t "SOAR-DDoS" "AUTO-UNBLOCKED IP $IP"
+
+    # Trigger SOAR Integrations (Shuffle, TheHive, MISP) in background
+    sudo /var/ossec/active-response/bin/soar_integrate.py "$ACTION" "$INPUT" >> "$LOG_FILE" 2>&1 &
 fi
 
 exit 0

@@ -1,0 +1,23 @@
+{
+  "shuffle": {
+    "url": "http://127.0.0.1:5001/webhook/ddos-alert",
+    "enabled": true,
+    "timeout": 5
+  },
+  "thehive": {
+    "url": "http://127.0.0.1:9000/api/case",
+    "enabled": true,
+    "api_key": "Bearer MockToken1234567890",
+    "timeout": 5
+  },
+  "misp": {
+    "url": "http://127.0.0.1:6666/attributes",
+    "enabled": true,
+    "api_key": "MockMISPApiKeyValue",
+    "timeout": 5
+  },
+  "logging": {
+    "file": "/var/log/soar-integrations.log",
+    "level": "INFO"
+  }
+}
