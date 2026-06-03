@@ -1,0 +1,20 @@
+# Secrets
+active-response/secrets.json
+
+# Private Keys and docs
+Private Key and Create Resource/
+Catatan.docx
+API_SOC.txt
+
+# Logs
+*.log
+active-response/firewall-drops.log
+
+# Temporary and mock files
+DDoS Auto Response (2).json
+soar_integration.py
+README_2.md
+
+# Python cache
+__pycache__/
+active-response/__pycache__/

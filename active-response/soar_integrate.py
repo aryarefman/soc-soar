@@ -9,21 +9,37 @@ import json
 import logging
 import requests
 import base64
+import os
 from logging.handlers import RotatingFileHandler
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ─────────────────────────────────────────────
 # CONFIG - Sesuaikan dengan nilai kamu
 # ─────────────────────────────────────────────
-SHUFFLE_WEBHOOK_URL = "https://shuffler.io/api/v1/hooks/webhook_4b677c5b-3509-4060-86f7-87d122b9d57b"
-
-JIRA_DOMAIN       = "https://habibieziddanmuhammad.atlassian.net"
-JIRA_EMAIL        = "habibieziddanmuhammad@gmail.com"
-JIRA_API_TOKEN    = "ATATT3xFfGF0CIuTxiZk7TUT9XYLw6Me3nS4jXnjQOO-1jXltMaIFqxRWu389mXdQX2ZVfIUSPA7S14HyLi9bgV_drRRgAFHYj5NouR9x8zSDb9OqvHZO9hric-QS-tAjs7vRiHhULymxb2sfwwDqnFAIi1bBZUul_XoHlONwzkhwPx9mwtPdEY=04D5A90C"
+# Default placeholders (safe for GitHub)
+SHUFFLE_WEBHOOK_URL = "https://shuffler.io/api/v1/hooks/webhook_placeholder"
+JIRA_DOMAIN       = "https://your-domain.atlassian.net"
+JIRA_EMAIL        = "your-email@example.com"
+JIRA_API_TOKEN    = "JIRA_API_TOKEN_PLACEHOLDER"
 JIRA_PROJECT_KEY  = "STD"
+TELEGRAM_BOT_TOKEN = "TELEGRAM_BOT_TOKEN_PLACEHOLDER"
+TELEGRAM_CHAT_ID   = "TELEGRAM_CHAT_ID_PLACEHOLDER"
 
-TELEGRAM_BOT_TOKEN = "8773538330:AAGwpXPVW9cJM4s61pIaC15aP4yxCrW2mgs"
-TELEGRAM_CHAT_ID   = "-5213597306"
+# Dynamic Secrets Loading
+SECRETS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secrets.json")
+if os.path.exists(SECRETS_FILE):
+    try:
+        with open(SECRETS_FILE, "r") as f:
+            secrets = json.load(f)
+            SHUFFLE_WEBHOOK_URL = secrets.get("SHUFFLE_WEBHOOK_URL", SHUFFLE_WEBHOOK_URL)
+            JIRA_DOMAIN       = secrets.get("JIRA_DOMAIN", JIRA_DOMAIN)
+            JIRA_EMAIL        = secrets.get("JIRA_EMAIL", JIRA_EMAIL)
+            JIRA_API_TOKEN    = secrets.get("JIRA_API_TOKEN", JIRA_API_TOKEN)
+            JIRA_PROJECT_KEY  = secrets.get("JIRA_PROJECT_KEY", JIRA_PROJECT_KEY)
+            TELEGRAM_BOT_TOKEN = secrets.get("TELEGRAM_BOT_TOKEN", TELEGRAM_BOT_TOKEN)
+            TELEGRAM_CHAT_ID   = secrets.get("TELEGRAM_CHAT_ID", TELEGRAM_CHAT_ID)
+    except Exception as e:
+        sys.stderr.write(f"Warning: Failed to load secrets from {SECRETS_FILE}: {e}\n")
 
 LOG_FILE = "/var/log/soar-integrations.log"
 TIMEOUT  = 10  # seconds
