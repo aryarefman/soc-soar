@@ -40,7 +40,7 @@ if [ "$ACTION" = "add" ]; then
     echo "[$TIMESTAMP] BLOCKED | IP: $IP via iptables" >> "$LOG_FILE"
     logger -t "SOAR-DDoS" "AUTO-BLOCKED IP $IP"
 
-    # Trigger SOAR Integrations (Shuffle, TheHive, MISP) in background
+    # Trigger SOAR Integrations (Shuffle, Jira, Telegram) in background
     sudo /var/ossec/active-response/bin/soar_integrate.py "$ACTION" "$INPUT" >> "$LOG_FILE" 2>&1 &
 
 elif [ "$ACTION" = "delete" ]; then
@@ -49,7 +49,7 @@ elif [ "$ACTION" = "delete" ]; then
     echo "[$TIMESTAMP] UNBLOCKED | IP: $IP" >> "$LOG_FILE"
     logger -t "SOAR-DDoS" "AUTO-UNBLOCKED IP $IP"
 
-    # Trigger SOAR Integrations (Shuffle, TheHive, MISP) in background
+    # Trigger SOAR Integrations (Shuffle, Jira, Telegram) in background
     sudo /var/ossec/active-response/bin/soar_integrate.py "$ACTION" "$INPUT" >> "$LOG_FILE" 2>&1 &
 fi
 

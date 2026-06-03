@@ -20,8 +20,8 @@ graph TD
     BlockScript -- 1. Local Mitigation --> LocalBlock[iptables -I INPUT -j DROP]
     BlockScript -- 2. REST API Trigger --> SOAR[soar_integrate.py]
     SOAR -- Webhook Trigger --> Shuffle[Shuffle SOAR]
-    SOAR -- Case Creation --> TheHive[TheHive Case Management]
-    SOAR -- Threat Intel --> MISP[MISP Threat Intelligence]
+    SOAR -- Incident Ticket --> Jira[Jira Cloud Ticket]
+    SOAR -- Alert Notification --> Telegram[Telegram Bot Channel]
 ```
 
 ---
@@ -36,9 +36,10 @@ graph TD
 │       └── local_decoder.xml       # Custom UFW log decoders
 ├── active-response/
 │   ├── ddos-block.sh               # Active response handler (Bash script)
-│   └── soar_integrate.py           # External SOAR REST API integrations (Python)
+│   ├── firewall-drop.sh            # Silent local firewall blocking (Bash script)
+│   └── soar_integrate.py           # SOAR Gateway: Shuffle + Jira + Telegram (Python)
 ├── soar-mock/
-│   └── soar_mock.py                # Mock listener script for Shuffle, TheHive, and MISP
+│   └── soar_mock.py                # Mock listener script (Legacy)
 ├── .gitignore                      # Git ignore rules for keys and system files
 └── README.md                       # Documentation
 ```
@@ -149,16 +150,15 @@ exit 0
 ```
 
 #### **active-response/soar_integrate.py**
-An enterprise-grade Python integration gateway connecting the Active Response trigger to 3 SOAR tools:
-- **Shuffle Webhook** on Port 5001 (Automated Playbooks)
-- **TheHive REST API** on Port 9000 (Case Management)
-- **MISP Threat Intel API** on Port 6666 (Indicators of Compromise Sharing)
+An enterprise-grade Python integration gateway connecting the Active Response trigger to modern SOAR, ticketing, and alerting tools:
+- **Shuffle Cloud Webhook** (Automated incident workflows)
+- **Jira Cloud REST API** (Bug/Incident ticket creation, comment updates, and transition closures)
+- **Telegram Bot API** (Instant markdown notifications to group chats/channels)
 
 **Key Enterprise Features:**
-1. **Parallel Execution (Multithreading)**: Uses Python's `ThreadPoolExecutor` to trigger Shuffle, TheHive, and MISP concurrently. This cuts network latency and reduces total execution time to under 100ms.
-2. **Wazuh JSON Payload Parsing**: Parses the raw Wazuh alert JSON payload, dynamically extracting rich metadata like Wazuh Agent Name, Rule Level, Source IP, and Alert ID to enrich incident cases and threat intelligence events.
+1. **Parallel Execution (Multithreading)**: Uses Python's `ThreadPoolExecutor` to trigger Shuffle, Jira, and Telegram concurrently. This cuts network latency and reduces total execution time to under 100ms.
+2. **Wazuh JSON Payload Parsing**: Parses the raw Wazuh alert JSON payload, dynamically extracting rich metadata like Wazuh Agent Name, Rule Level, Source IP, and Alert ID to enrich Jira tickets and Telegram message content.
 3. **Robust Log Rotation**: Configured with a `RotatingFileHandler` that limits log size to 10MB (keeping 5 backups) to prevent disk space exhaustion.
-4. **Dual-Mode Compatibility**: Supports both raw JSON input parsing and legacy positional argument fallback for backward-compatible testing.
 
 ---
 
@@ -183,11 +183,11 @@ sudo iptables -L INPUT -n -v
 ```
 
 ### 4. Verify SOAR API Logs
-Check the integration logs on Agent-1 to confirm Shuffle, TheHive, and MISP were successfully triggered:
+Check the integration logs on the Wazuh Manager to confirm Shuffle, Jira, and Telegram were successfully triggered:
 ```bash
 sudo cat /var/log/soar-integrations.log
 ```
-The logs will confirm the successful API POST requests and `HTTP 200` responses received from the mock services.
+The logs will confirm the successful API requests and `HTTP 200` responses received from the external endpoints.
 
 ---
 
@@ -221,43 +221,22 @@ Chain INPUT (policy ACCEPT 142 packets, 9520 bytes)
 ```
 *Note: Packets from `10.0.0.5` are dropped at the input stage, successfully mitigating the flood.*
 
-### 4. SOAR Integration & Mock API Logs
-The `soar_integrate.py` script successfully forwarded the alert metadata to the simulated SOAR webhook endpoints. Below is the log history from `/var/log/soar-integrations.log` showing the orchestration lifecycle (IP block case creation and subsequent unblock update).
+### 4. SOAR Integration Logs
+The `soar_integrate.py` script successfully forwards the alert metadata to Shuffle, Jira, and Telegram. Below is the log history from `/var/log/soar-integrations.log` showing the orchestration lifecycle (IP block case creation and Telegram alert).
 
 #### **Log Output: /var/log/soar-integrations.log**
 ```text
-[2026-06-01 08:31:34,432] [INFO] [SOAR-GATEWAY] ===========================================================
-[2026-06-01 08:31:34,432] [INFO] [SOAR-GATEWAY] Processing SOAR Integration Trigger | Action: ADD | Attacker: 10.0.0.5
-[2026-06-01 08:31:34,432] [INFO] [SOAR-GATEWAY] Rule ID: 100201 (Level: 14) | Alert ID: 9999.8888 | Agent: wazuh-agent-1
-[2026-06-01 08:31:34,432] [INFO] [SOAR-GATEWAY] ===========================================================
-[2026-06-01 08:31:34,433] [INFO] [SOAR-GATEWAY] Triggering Shuffle webhook for action: add...
-[2026-06-01 08:31:34,434] [INFO] [SOAR-GATEWAY] Sharing Threat Intel attribute with MISP (Action: add)...
-[2026-06-01 08:31:34,433] [INFO] [SOAR-GATEWAY] Creating incident case in TheHive for IP: 10.0.0.5...
-[2026-06-01 08:31:34] [MOCK-SERVICE] --- Received Request on Port 5001 (Shuffle) ---
-[2026-06-01 08:31:34] [MOCK-SERVICE] --- Received Request on Port 9000 (TheHive) ---
-[2026-06-01 08:31:34] [MOCK-SERVICE] --- Received Request on Port 6666 (MISP) ---
-[2026-06-01 08:31:34,485] [INFO] [SOAR-GATEWAY] MISP Response [SUCCESS]: Code 200
-[2026-06-01 08:31:34,503] [INFO] [SOAR-GATEWAY] TheHive Response [SUCCESS]: Code 200
-[2026-06-01 08:31:34,504] [INFO] [SOAR-GATEWAY] Shuffle Response [SUCCESS]: Code 200
-[2026-06-01 08:31:34,504] [INFO] [SOAR-GATEWAY] SOAR Integration Trigger completed for Action: ADD
-
-[2026-06-01 08:32:09,105] [INFO] [SOAR-GATEWAY] ===========================================================
-[2026-06-01 08:32:09,105] [INFO] [SOAR-GATEWAY] Processing SOAR Integration Trigger | Action: DELETE | Attacker: 10.0.0.5
-[2026-06-01 08:32:09,105] [INFO] [SOAR-GATEWAY] Rule ID: 100201 (Level: 14) | Alert ID: 9999.8888 | Agent: wazuh-agent-1
-[2026-06-01 08:32:09,105] [INFO] [SOAR-GATEWAY] ===========================================================
-[2026-06-01 08:32:09,106] [INFO] [SOAR-GATEWAY] Triggering Shuffle webhook for action: delete...
-[2026-06-01 08:32:09] [MOCK-SERVICE] --- Received Request on Port 5001 (Shuffle) ---
-[2026-06-01 08:32:09,135] [INFO] [SOAR-GATEWAY] Shuffle Response [SUCCESS]: Code 200
-[2026-06-01 08:32:09,136] [INFO] [SOAR-GATEWAY] Updating incident case in TheHive (Unblock IP 10.0.0.5)...
-[2026-06-01 08:32:09] [MOCK-SERVICE] --- Received Request on Port 9000 (TheHive) ---
-[2026-06-01 08:32:09,137] [INFO] [SOAR-GATEWAY] TheHive Response [SUCCESS]: Code 200
-[2026-06-01 08:32:09,137] [INFO] [SOAR-GATEWAY] Sharing Threat Intel attribute with MISP (Action: delete)...
-[2026-06-01 08:32:09] [MOCK-SERVICE] --- Received Request on Port 6666 (MISP) ---
-[2026-06-01 08:32:09,138] [INFO] [SOAR-GATEWAY] MISP Response [SUCCESS]: Code 200
-[2026-06-01 08:32:09,138] [INFO] [SOAR-GATEWAY] SOAR Integration Trigger completed for Action: DELETE
+[2026-06-02 15:49:54,477] [INFO] [SOAR-GATEWAY] =======================================================
+[2026-06-02 15:49:54,477] [INFO] [SOAR-GATEWAY] Processing | Action: ADD | Attacker: 10.0.0.5
+[2026-06-02 15:49:54,477] [INFO] [SOAR-GATEWAY] Rule: 100201 (Level 14) | Agent: wazuh-agent-1
+[2026-06-02 15:49:54,477] [INFO] [SOAR-GATEWAY] =======================================================
+[2026-06-02 15:49:55,223] [INFO] [SOAR-GATEWAY] Telegram [SUCCESS]: Telegram OK [200]
+[2026-06-02 15:49:55,358] [INFO] [SOAR-GATEWAY] Shuffle [SUCCESS]: Shuffle OK [200]
+[2026-06-02 15:49:55,859] [INFO] [SOAR-GATEWAY] Jira [SUCCESS]: Jira ticket CREATED: STD-2
+[2026-06-02 15:49:55,859] [INFO] [SOAR-GATEWAY] SOAR Integration completed for Action: ADD
 ```
 
 ### 🏆 Key Success Factors (MIKS & SOAR Goals)
-1. **Dynamic Closed-Loop Incident Response**: The integration automatically transitions from attack detection (Wazuh SIEM) to local blocking (firewall level) to enterprise case/threat-intel documentation (SOAR level) without human intervention.
-2. **Lifecycle Management**: By capturing both `add` and `delete` triggers, the SIEM/SOAR system handles the entire security asset lifecycle—automatically removing firewall rules after block timeout, updating incident tickets in TheHive, and updating indicators in MISP to keep information fresh and minimize firewall rule bloat.
-3. **Multi-Platform Orchestration**: A single agent-side trigger synchronizes local firewalls, case tracking, workflow management, and threat intelligence distribution.
+1. **Dynamic Closed-Loop Incident Response**: The integration automatically transitions from attack detection (Wazuh SIEM) to local blocking (firewall level) to ticketing (Jira level) and instant messaging alerts (Telegram) without human intervention.
+2. **Lifecycle Management**: By capturing both `add` and `delete` triggers, the SIEM/SOAR system handles the entire security asset lifecycle—automatically removing firewall rules after block timeout, updating and resolving incident tickets in Jira, and notifying the response team via Telegram.
+3. **Multi-Platform Orchestration**: A single trigger synchronizes local firewalls, case tracking, workflow management, and real-time communications.
