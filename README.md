@@ -6,6 +6,16 @@ This project was built for the **SOC (Security Operations Center) and MIKS (Magi
 
 ---
 
+## 📋 Prerequisites & Environments
+
+To deploy and run this active response gateway, ensure the following environments are set up:
+- **Wazuh SIEM**: Wazuh Manager (v4.x) and Wazuh Agent installed on target machines.
+- **Target OS**: Linux-based agent (Ubuntu/Debian) with `iptables` and `ufw` enabled.
+- **Python Runtime**: Python 3.8+ with standard libraries (`requests`, `json`, `concurrent.futures`, `logging`).
+- **SOAR Platforms**: Integration tokens for Shuffle SOAR, Jira Cloud API, and a Telegram Bot API.
+
+---
+
 ## 🏛️ Architecture Overview
 
 The system architecture consists of a central **Wazuh Manager** connected to monitored targets (agents) and a **SOAR integration gateway** that orchestrates automated mitigation and case management:
@@ -23,6 +33,9 @@ graph TD
     SOAR -- Incident Ticket --> Jira[Jira Cloud Ticket]
     SOAR -- Alert Notification --> Telegram[Telegram Bot Channel]
 ```
+
+### 🔄 System Workflow Diagram
+![System Workflow](image/workflow.png)
 
 ---
 
@@ -235,6 +248,22 @@ The `soar_integrate.py` script successfully forwards the alert metadata to Shuff
 [2026-06-02 15:49:55,859] [INFO] [SOAR-GATEWAY] Jira [SUCCESS]: Jira ticket CREATED: STD-2
 [2026-06-02 15:49:55,859] [INFO] [SOAR-GATEWAY] SOAR Integration completed for Action: ADD
 ```
+
+![Integration Log Output](image/log-success-integrate.png)
+
+### 5. Shuffle Workflow Execution Proof
+Below is the execution status of the Shuffle SOAR workflow showing successful execution and routing:
+![Shuffle Workflow Debug](image/shuffle-debug.png)
+
+### 6. Jira Incident Ticket Proof
+A Jira ticket is automatically created for tracking:
+![Jira Ticket](image/jira.png)
+
+### 7. Telegram Alert Notification Proof
+The SOC team receives real-time Telegram notifications when attacks are blocked or unblocked:
+![Telegram Alert Notification](image/telegram.png)
+
+---
 
 ### 🏆 Key Success Factors (MIKS & SOAR Goals)
 1. **Dynamic Closed-Loop Incident Response**: The integration automatically transitions from attack detection (Wazuh SIEM) to local blocking (firewall level) to ticketing (Jira level) and instant messaging alerts (Telegram) without human intervention.
