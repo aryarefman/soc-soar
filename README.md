@@ -238,17 +238,6 @@ Chain INPUT (policy ACCEPT 142 packets, 9520 bytes)
 The `soar_integrate.py` script successfully forwards the alert metadata to Shuffle, Jira, and Telegram. Below is the log history from `/var/log/soar-integrations.log` showing the orchestration lifecycle (IP block case creation and Telegram alert).
 
 #### **Log Output: /var/log/soar-integrations.log**
-```text
-[2026-06-02 15:49:54,477] [INFO] [SOAR-GATEWAY] =======================================================
-[2026-06-02 15:49:54,477] [INFO] [SOAR-GATEWAY] Processing | Action: ADD | Attacker: 10.0.0.5
-[2026-06-02 15:49:54,477] [INFO] [SOAR-GATEWAY] Rule: 100201 (Level 14) | Agent: wazuh-agent-1
-[2026-06-02 15:49:54,477] [INFO] [SOAR-GATEWAY] =======================================================
-[2026-06-02 15:49:55,223] [INFO] [SOAR-GATEWAY] Telegram [SUCCESS]: Telegram OK [200]
-[2026-06-02 15:49:55,358] [INFO] [SOAR-GATEWAY] Shuffle [SUCCESS]: Shuffle OK [200]
-[2026-06-02 15:49:55,859] [INFO] [SOAR-GATEWAY] Jira [SUCCESS]: Jira ticket CREATED: STD-2
-[2026-06-02 15:49:55,859] [INFO] [SOAR-GATEWAY] SOAR Integration completed for Action: ADD
-```
-
 ![Integration Log Output](image/log-success-integrate.png)
 
 ### 5. Shuffle Workflow Execution Proof
